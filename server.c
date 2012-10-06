@@ -11,6 +11,7 @@
 #include <netdb.h>
 
 #define QUEUE 10
+#define MAX_BUF_SIZE 1024
 
 int main(int argc, char **argv){
 	if(argc < 2){
@@ -53,6 +54,13 @@ int main(int argc, char **argv){
 	}
 	/*	At this point, the socket is set up for the server and has accepted a
 	 *	client's connect().
+	 */
+	char buffer[MAX_BUF_SIZE];
+	int bytes_read;
+	bytes_read = recv(sockfd_client, buffer, 4,0);
+	printf("\n\"%s\"\n",buffer);
+	/* I'm not entirely sure how many bytes I should be reading in.
+	 * 32 bits = 1 byte.
 	 */
 	return 0;
 }
