@@ -20,18 +20,30 @@
 #define CLIENT_H_
 
 typedef struct {
+	int dollar1;
+	int cent1;
+	int inches1;
+	int fracInches1;
+
+	int dollar2;
+	int cent2;
+	int inches2;
+	int fracInches2;
+
+	int name1_Len;
+	int name2_Len;
+
 	char name1;
 	char name2;
-	int diameter1;
-	int diameter2;
-	int price1;
-	int price2;
-} Parlor;
+}__attribute__ ((packed)) Parlor ;
 
 typedef struct {
-	int cost1;
-	int cost2;
-} Server_rtrn;
+	int dollar1;
+	int dollar2;
+	int cent1;
+	int cent2;
+	char winner;
+}__attribute__ ((packed)) Server_rtrn ;
 
 #endif
 
