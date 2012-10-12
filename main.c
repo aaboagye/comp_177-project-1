@@ -18,7 +18,8 @@
 #include <netdb.h>
 #include "client.h"
 
-#define PORT 4000//The port that the client will be connecting to
+//Aseda's IP Addr v 4: 10.6.146.224
+//#define PORT 4000//The port that the client will be connecting to
 #define MAXDATASIZE 1024 //Max number of bytes we can get at once
 
 /* Sites that might help us:
@@ -26,57 +27,80 @@
  * - ^^ASEDA!!! This might help you with the server, it has a sample program for client and server
  */
 
-int main(int argc, char *argv[]) {
-	int status, answer;
+int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 port
+	int status;
+	char temp1[255], temp2[255];
 	int sockfd = 0, numbytes;
+	//long addr;
 	char buffer[MAXDATASIZE];
 
-	struct hostent *he;
+	//struct hostent *he;
 	//Connector's address information needed
-	struct sockaddr_in their_addr;
+	//struct sockaddr_in their_addr;
+	struct addrinfo serv_addr;
+	struct addrinfo *servinfo;
 
 	Parlor info; //Needed to store input from the user
 	Server_rtrn results; //Needed to store results from the server
 
-	if(argc != 2) { //If no command line argument supplied
+	if(argc != 3) { //If no command line argument supplied
 		fprintf(stderr, "Client-Usage: %s the_client_hostname\n", argv[0]);
-		exit1(1); //Just exit
+		exit(1); //Just exit
 	}
 
 	memset(&info, 0, sizeof info); //Make sure the structure is empty
 	memset(buffer, '0',sizeof(buffer));
+	memset(&serv_addr, 0, sizeof serv_addr); //Zero the rest of the struct
 
-	printf("Welcome to the Pizza program!\n\n"); //Welcome! =)
+	printf("\nWelcome to the Pizza program!\n\n"); //Welcome! =)
 
 	printf("Enter the name of pizza parlor 1: "); //Asks info about first parlor
-	scanf("%s", &info.name1);
+	scanf("%255s", temp1);
+	info.name1_Len = strlen(temp1);
+	info.name1 = temp1[0];
 	printf("\nEnter the diameter of pizza 1 in inches: ");
-	scanf("%i", &info.diameter1);
-	printf("\nEnter the price of pizza 1: ");
-	scanf("%d", &info.price1);
+	scanf("%i.%i", &info.inches1, &info.fracInches1);
+	printf("\nEnter the price of pizza 1: $");
+	scanf("%d.%02d", &info.dollar1, &info.cent1);
 
-	printf("\n\nEnter the name of pizza parlor 2: "); //Asks info about the second parlor
-	scanf("%s", &info.name2);
+	printf("\nEnter the name of pizza parlor 2: "); //Asks info about the second parlor
+	scanf("%255s", temp2);
+	info.name2_Len = strlen(temp2);
+	info.name2 = temp2[0];
 	printf("\nEnter the diameter of pizza 2 in inches: ");
-	scanf("%i", &info.diameter2);
-	printf("\nEnter the price of pizza 2: ");
-	scanf("%d", &info.price2);
+	scanf("%i.%i", &info.inches2, &info.fracInches2);
+	printf("\nEnter the price of pizza 2: $");
+	scanf("%d.%02d", &info.dollar2, &info.cent2);
 
 	//Creating a socket
+	//he = gethostbyname(argv[1]); // --> deprecated
+	//he = gethostbyaddr((char *) argv[1], sizeof(argv[1]), AF_INET); //argv[1] = Asedas IP
 
-	he = gethostbyname(argv[1]);
 	//Get the Host Information
-	if(he == NULL) {
-		perror("gethostbyname()");
+	/*if(he == NULL) {
+		perror("gethostbyaddr()");
 		exit(1);
 	}
 
 	else {
 		printf("Client - The remote host is: %s \n", argv[1]);
+	}*/
+
+	serv_addr.ai_family = AF_UNSPEC;
+	serv_addr.ai_socktype = SOCK_STREAM; // TCP stream sockets
+	serv_addr.ai_flags = AI_CANONNAME;     // fill in my IP for me
+
+	if ((status = getaddrinfo(argv[1], argv[2], &serv_addr, &servinfo)) != 0) {
+	    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+	    exit(1);
 	}
 
-	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) { //Print out failed if socket cannot be created
-		printf("\nERROR: Could not create socket!");
+	else {
+		printf("\nClient - The getaddrinfo() is OK.. \n");
+	}
+
+	if((sockfd = socket(servinfo -> ai_family, servinfo -> ai_socktype, servinfo -> ai_protocol)) < 0) { //Print out failed if socket cannot be created
+		printf("ERROR: Could not create socket!\n");
 		exit(1);
 	}
 
@@ -84,15 +108,16 @@ int main(int argc, char *argv[]) {
 		printf("Client - The socket() sockfd is OK.. \n");
 	}
 
-	their_addr.sin_family = AF_INET; //Host byte order
+	bind(sockfd, servinfo -> ai_addr, servinfo -> ai_addrlen);
+
+	//their_addr.sin_family = AF_INET; //Host byte order
+
 	//Short, network byte order
-	printf("Server - Using %s and port %d...\n", argv[1], PORT); //Need to add port #
-	their_addr.sin_port = htons(PORT);
-	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
-	memset(&(their_addr.sin_zero), '\0', 8); //Zero the rest of the struct
+
+	printf("Server - Using %s and port %s...\n", argv[1], argv[2]);
 
 	//Connecting the server...
-	if(connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) {
+	if(connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen)) {//connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) == -1) {
 		perror("Connect()");
 		exit(1);
 	}
@@ -120,14 +145,49 @@ int main(int argc, char *argv[]) {
 	*/
 
 	//Sending information...
+	//STILL NEED TO CODE THIS PART!
+	//		sendto() == -1 then fail
+	//		else printf("Client - The sendto() is OK.. \n");
 
+	int len = strlen(buffer);
 
-	//Read and Write via socket??? CELENA RESEARCH MORE!!!
+	int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1 +info.name2_Len + 1;
+
+	char* pointer_to_buffer = malloc(total_data);
+
+	Parlor* pointer_to_buffer_as_struct;  // No structure here - just an empty pointer!
+
+	pointer_to_buffer_as_struct = (Parlor *) pointer_to_buffer; // Casting
+
+	pointer_to_buffer_as_struct -> dollar1 = htons(info.dollar1);
+	pointer_to_buffer_as_struct -> dollar2 = htons(info.dollar2);
+	pointer_to_buffer_as_struct -> cent1 = htons(info.cent1);
+	pointer_to_buffer_as_struct -> cent2 = htons(info.cent2);
+	pointer_to_buffer_as_struct -> inches1 = htons(info.inches1);
+	pointer_to_buffer_as_struct -> inches2 = htons(info.inches2);
+	pointer_to_buffer_as_struct -> fracInches1 = htons(info.fracInches1);
+	pointer_to_buffer_as_struct -> fracInches2 = htons(info.fracInches2);
+	pointer_to_buffer_as_struct -> name1_Len = htons(info.name1_Len);
+	pointer_to_buffer_as_struct -> name2_Len = htons(info.name2_Len);
+
+	strcpy(&pointer_to_buffer_as_struct -> name1, temp1);
+	strcpy(&pointer_to_buffer_as_struct -> name2, temp2);
+
+	if(send(sockfd, (char *)pointer_to_buffer_as_struct, len, 0) == -1) {
+		perror("send()");
+		exit(1);
+	}
+
+	else {
+		printf("Client - The send() is OK.. \n");
+	}
+
+	//Read and Write via socket???
 	//rc = write(sockfd, &ch, 1);
 	//read(sockfd, &ch, 1);
+	//recv() difference with recvfrom()???
 
-	//Receiving reply...
-	//Read back from server
+	//Receiving reply... Read back from server
 	if((numbytes = recv(sockfd, buffer, MAXDATASIZE - 1, 0)) == -1) {
 		perror("recv()");
 		exit(1);
@@ -139,14 +199,17 @@ int main(int argc, char *argv[]) {
 
 	//Get results and store into Server_rtrn structure
 	buffer[numbytes] = '\0';
-	printf("client - Received: %s", buffer);
+	printf("Client - Received: %s ...\n", buffer);
 	//results.cost1 = ;
 	//results.cost2 = ;
+	//results.winner = ;
 
-	printf("The cost per square inch of pizza 1 is: %i", results.cost1);
-	printf("The cost per square inch of pizza 2 is: %i", results.cost2);
+	printf("\n\nThe cost per square inch of pizza 1 is: $%d.%d", results.dollar1, results.cent1);
+	printf("\nThe cost per square inch of pizza 2 is: $%d.%d", results.dollar2, results.cent2);
 
-	if(results.cost1 < results.cost2) { //If parlor 1 cost is less than parlor 2 cost
+	printf("\n%s offers the most economical choice. \n\nEnjoy!", results.winner);
+	/*
+	if(results.dollar1 < results.cost2) { //If parlor 1 cost is less than parlor 2 cost
 		printf("%s offers the most economical choice. \n\nEnjoy!", &info.name1);
 	}
 
@@ -156,7 +219,7 @@ int main(int argc, char *argv[]) {
 
 	if(results.cost1 == results.cost2) { //If both cost are equal
 		printf("Both parlor offers the most economical choice. \n\nEnjoy!");
-	}
+	}*/
 
 	//Research SIGINT!!!!
 	//Your server should "capture" the user's keystroke (technically, the SIGINT interrupt triggered by CTRL-C),
@@ -177,7 +240,10 @@ int main(int argc, char *argv[]) {
   	  	  return 0;
 	} */
 
-	printf("Client - Closing sockfd\n");
+	free(pointer_to_buffer_as_struct);
+	freeaddrinfo(servinfo);
+	printf("\nClient - Closing sockfd.. \n");
 	close(sockfd); //Close socket when finished
 	return 0;
 }
+
