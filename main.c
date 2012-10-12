@@ -59,18 +59,18 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	info.name1_Len = strlen(temp1);
 	info.name1 = temp1[0];
 	printf("\nEnter the diameter of pizza 1 in inches: ");
-	scanf("%i.%i", &info.inches1, &info.fracInches1);
+	scanf("%hu.%hu", &info.inches1, &info.fracInches1);
 	printf("\nEnter the price of pizza 1: $");
-	scanf("%d.%02d", &info.dollar1, &info.cent1);
+	scanf("%hu.%02hu", &info.dollar1, &info.cent1);
 
 	printf("\nEnter the name of pizza parlor 2: "); //Asks info about the second parlor
 	scanf("%255s", temp2);
 	info.name2_Len = strlen(temp2);
 	info.name2 = temp2[0];
 	printf("\nEnter the diameter of pizza 2 in inches: ");
-	scanf("%i.%i", &info.inches2, &info.fracInches2);
+	scanf("%hu.%hu", &info.inches2, &info.fracInches2);
 	printf("\nEnter the price of pizza 2: $");
-	scanf("%d.%02d", &info.dollar2, &info.cent2);
+	scanf("%hu.%02hu", &info.dollar2, &info.cent2);
 
 	//Creating a socket
 	//he = gethostbyname(argv[1]); // --> deprecated
@@ -204,8 +204,8 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	//results.cost2 = ;
 	//results.winner = ;
 
-	printf("\n\nThe cost per square inch of pizza 1 is: $%d.%d", results.dollar1, results.cent1);
-	printf("\nThe cost per square inch of pizza 2 is: $%d.%d", results.dollar2, results.cent2);
+	printf("\n\nThe cost per square inch of pizza 1 is: $%hu.%hu", results.dollar1, results.cent1);
+	printf("\nThe cost per square inch of pizza 2 is: $%hu.%hu", results.dollar2, results.cent2);
 
 	printf("\n%s offers the most economical choice. \n\nEnjoy!", results.winner);
 	/*

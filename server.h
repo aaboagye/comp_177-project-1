@@ -9,4 +9,6 @@ struct parlor{
 	uint16_t pizza2_fractional_inches;
 	uint16_t vendor1_name_ln;
 	uint16_t vendor2_name_ln;
+	char	vendor1_st;
+	char	vendor2_st;
 } __attribute__ ((packed));
