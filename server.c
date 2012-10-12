@@ -63,20 +63,23 @@ int main(int argc, char **argv){
 	char vendor1[MAX_BUF_SIZE];
 	char vendor2[MAX_BUF_SIZE];
 	int total_size1 = sizeof(struct parlor) - 1 + strlen(vendor1) + 1;
-	int total_size2 = sizeof(struct parlor) - 1 + strlen(vendor2) + 1;
 	char* buffer_ptr1 = malloc(total_size1);
-	char* buffer_ptr2 = malloc(total_size2);
 	struct parlor* ptr_bytes1;
-	struct parlor* ptr_bytes2;
 	ptr_bytes1 = (struct parlor*) buffer_ptr1;
-	ptr_bytes2 = (struct parlor*) buffer_ptr2;
-	
 	/* here there needs to be something along the lines of: */
-	recv(sockfd_client, buffer, 2, 0); /* receiving 16 bits = 2 bytes */
-	ptr_bytes1->pizza_dollars = (uint16_t) buffer;
-	recv(sockfd_client, buffer, 2, 0);
-	ptr_bytes1->pizza_cents = (uint16_t) buffer;	
-	printf("$%i.%i\n",ptr_bytes1->pizza_dollars, ptr_bytes1->pizza_cents);
+	recv(sockfd_client, buffer, 160, 0); /* have received the whole buffer */
+	ptr_bytes1 = (struct parlor*) buffer;
+	ptr_bytes1->pizza1_dollars = ntohs(ptr_bytes1->pizza1_dollars);
+	ptr_bytes1->pizza1_cents = ntohs(ptr_bytes1->pizza1_cents);
+	ptr_bytes1->pizza1_inches = ntohs(ptr_bytes1->pizza1_inches);
+	ptr_bytes1->pizza1_fractional_inches = ntohs(ptr_bytes1->pizza1_fractional_inches);
+	ptr_bytes1->pizza2_dollars = ntohs(ptr_bytes1->pizza2_dollars);
+	ptr_bytes1->pizza2_cents = ntohs(ptr_bytes1->pizza2_cents);
+	ptr_bytes1->pizza2_inches = ntohs(ptr_bytes1->pizza2_inches);
+	ptr_bytes1->pizza2_fractional_inches = ntohs(ptr_bytes1->pizza2_fractional_inches);
+	ptr_bytes1->vendor1_name_ln = ntohs(ptr_bytes1->vendor1_name_ln);
+	ptr_bytes1->vendor2_name_ln = ntohs(ptr_bytes1->vendor2_name_ln);
+	printf("$%i.%i\n",ptr_bytes1->pizza1_dollars, ptr_bytes1->pizza1_cents);
 	
 	close(sockfd);
 	freeaddrinfo(res);
