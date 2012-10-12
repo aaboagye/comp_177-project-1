@@ -63,7 +63,7 @@ int main(int argc, char **argv){
 	/* Now I need to separate the data into the respective fields */
 	char vendor1[MAX_NAME_SIZE];
 	char vendor2[MAX_NAME_SIZE];
-	int total_size1 = sizeof(struct parlor) -1 -1 + 256 + 256;
+	int total_size1 = sizeof(struct parlor) -1 -1 + 256;
 	char* buffer_ptr1 = malloc(total_size1);
 	struct parlor* ptr_bytes1;
 	ptr_bytes1 = (struct parlor*) buffer_ptr1;
@@ -80,12 +80,14 @@ int main(int argc, char **argv){
 	ptr_bytes1->pizza2_fractional_inches = ntohs(ptr_bytes1->pizza2_fractional_inches);
 	ptr_bytes1->vendor1_name_ln = ntohs(ptr_bytes1->vendor1_name_ln);
 	ptr_bytes1->vendor2_name_ln = ntohs(ptr_bytes1->vendor2_name_ln);
+	strcpy(vendor1, &ptr_bytes1->vendor1_st);
+	strcpy(vendor2, (char *)ptr_bytes1);
 	printf("$%i.%i\n",ptr_bytes1->pizza1_dollars, ptr_bytes1->pizza1_cents);
 	printf("Diameter of pizza 1: %u.%u\n", ptr_bytes1->pizza1_inches, ptr_bytes1->pizza1_fractional_inches);
 	printf("Cost of pizza2: $%u.%u\n",ptr_bytes1->pizza2_dollars, ptr_bytes1->pizza2_cents);
 	printf("Diameter of pizza 2: %u.%u\n", ptr_bytes1->pizza2_inches, ptr_bytes1->pizza2_fractional_inches);
-	printf("Pizza 1 vendor: \"%d\"\n", ptr_bytes1->vendor1_name_ln);
-	printf("Pizza 2 vendor: \"%d\"\n", ptr_bytes1->vendor2_name_ln);
+	printf("Pizza 1 vendor: \"%s\"\n", vendor1);
+	printf("Pizza 2 vendor: \"%s\"\n", vendor2);
 	
 	close(sockfd);
 	freeaddrinfo(res);
