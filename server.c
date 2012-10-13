@@ -63,7 +63,7 @@ int main(int argc, char **argv){
 	/* Now I need to separate the data into the respective fields */
 	char vendor1[MAX_NAME_SIZE];
 	char vendor2[MAX_NAME_SIZE];
-	int total_size1 = sizeof(struct parlor) -1 -1 + 256;
+	int total_size1 = sizeof(struct parlor) -1 + MAX_NAME_SIZE;
 	char* buffer_ptr1 = malloc(total_size1);
 	struct parlor* ptr_bytes1;
 	ptr_bytes1 = (struct parlor*) buffer_ptr1;

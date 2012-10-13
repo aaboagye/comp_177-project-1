@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	pointer_to_buffer_as_struct -> name2_Len = htons(info.name2_Len);
 
 	strcpy(&pointer_to_buffer_as_struct -> name1, temp1);
-	strcpy((char *)&pointer_to_buffer_as_struct[total_data], temp2);
+	strcpy((char *)&pointer_to_buffer_as_struct[total_data-1], temp2);
 	/*strcpy(&pointer_to_buffer_as_struct -> name2, temp2);*/
 
 	if(send(sockfd, (char *)pointer_to_buffer_as_struct, len, 0) == -1) {
