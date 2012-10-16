@@ -80,8 +80,8 @@ int main(int argc, char **argv){
 	ptr_bytes1->pizza2_fractional_inches = ntohs(ptr_bytes1->pizza2_fractional_inches);
 	ptr_bytes1->vendor1_name_ln = ntohs(ptr_bytes1->vendor1_name_ln);
 	ptr_bytes1->vendor2_name_ln = ntohs(ptr_bytes1->vendor2_name_ln);
-	strcpy(vendor1, &ptr_bytes1->vendor1_st);
-	strcpy(vendor2, (char *)ptr_bytes1);
+	strcpy(vendor1, (char*) (ptr_bytes1 + sizeof(struct parlor)));
+	strcpy(vendor2, (char*) (ptr_bytes1 + (int)ptr_bytes1->vendor1_name_ln));
 	printf("$%i.%i\n",ptr_bytes1->pizza1_dollars, ptr_bytes1->pizza1_cents);
 	printf("Diameter of pizza 1: %u.%u\n", ptr_bytes1->pizza1_inches, ptr_bytes1->pizza1_fractional_inches);
 	printf("Cost of pizza2: $%u.%u\n",ptr_bytes1->pizza2_dollars, ptr_bytes1->pizza2_cents);

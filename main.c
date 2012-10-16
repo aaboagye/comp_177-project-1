@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	struct addrinfo serv_addr;
 	struct addrinfo *servinfo;
 
-	Parlor info; //Needed to store input from the user
+	/*Parlor info; //Needed to store input from the user*/
 	Server_rtrn results; //Needed to store results from the server
 
 	if(argc != 3) { //If no command line argument supplied
@@ -48,16 +48,16 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 		exit(1); //Just exit
 	}
 
+	Parlor info;
+
 	memset(&info, 0, sizeof info); //Make sure the structure is empty
 	memset(buffer, '0',sizeof(buffer));
 	memset(&serv_addr, 0, sizeof serv_addr); //Zero the rest of the struct
 
 	printf("\nWelcome to the Pizza program!\n\n"); //Welcome! =)
-
 	printf("Enter the name of pizza parlor 1: "); //Asks info about first parlor
 	scanf("%255s", temp1);
 	info.name1_Len = strlen(temp1);
-	info.name1 = temp1[0];
 	printf("\nEnter the diameter of pizza 1 in inches: ");
 	scanf("%hu.%hu", &info.inches1, &info.fracInches1);
 	printf("\nEnter the price of pizza 1: $");
@@ -66,11 +66,32 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	printf("\nEnter the name of pizza parlor 2: "); //Asks info about the second parlor
 	scanf("%255s", temp2);
 	info.name2_Len = strlen(temp2);
-	info.name2 = temp2[0];
 	printf("\nEnter the diameter of pizza 2 in inches: ");
 	scanf("%hu.%hu", &info.inches2, &info.fracInches2);
 	printf("\nEnter the price of pizza 2: $");
 	scanf("%hu.%02hu", &info.dollar2, &info.cent2);
+
+	Parlor* send_data = ((Parlor *) malloc(sizeof(Parlor) + info.name1_Len + info.name2_Len));
+	memset(send_data, 0, sizeof(send_data));
+	send_data -> dollar1 = htons(info.dollar1);
+	send_data -> dollar2 = htons(info.dollar2);
+	send_data -> cent1 = htons(info.cent1);
+	send_data -> cent2 = htons(info.cent2);
+	send_data -> inches1 = htons(info.inches1);
+	send_data -> inches2 = htons(info.inches2);
+	send_data -> fracInches1 = htons(info.fracInches1);
+	send_data -> fracInches2 = htons(info.fracInches2);
+	send_data -> name1_Len = htons(info.name1_Len);
+	send_data -> name2_Len = htons(info.name2_Len);
+
+	printf("DEBUGGING:\n\n");
+	printf("Size of Parlor: %u\nBeginning of structure: 0x%0x\nBeginning of string1: 0x%0x\n", (unsigned int) sizeof(Parlor), (unsigned int) (send_data), (unsigned int)(send_data + sizeof(Parlor)));
+	printf("strlen(temp1): %u", (unsigned int)strlen(temp1));
+	printf("temp2 init: 0x%0x\n", (unsigned int)(send_data + sizeof(Parlor) + info.name1_Len + 1));
+	strncpy((char *)(send_data + 1), temp1, strlen(temp1));
+	strncpy((char*)(send_data + 1 + (info.name1_Len + 1)), temp2, strlen(temp2));
+	memcpy((&send_data + sizeof(Parlor)), temp1, strlen(temp1));
+	memcpy((&send_data + sizeof(Parlor) + strlen(temp1) + 1), temp2, strlen(temp2));
 
 	//Creating a socket
 	//he = gethostbyname(argv[1]); // --> deprecated
@@ -152,7 +173,8 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	int len = strlen(buffer);
 
 	/*int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1 +info.name2_Len + 1;*/
-	int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1;
+	/*int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1;
+	int total_data = sizeof(Parlor) + info.name1_Len + 1 + info.name2_Len + 1;  +1 for \0
 
 	char* pointer_to_buffer = malloc(total_data);
 
@@ -170,12 +192,14 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	pointer_to_buffer_as_struct -> fracInches2 = htons(info.fracInches2);
 	pointer_to_buffer_as_struct -> name1_Len = htons(info.name1_Len);
 	pointer_to_buffer_as_struct -> name2_Len = htons(info.name2_Len);
+	
+	strcpy(&
 
 	strcpy(&pointer_to_buffer_as_struct -> name1, temp1);
 	strcpy((char *)&pointer_to_buffer_as_struct[total_data-1], temp2);
-	/*strcpy(&pointer_to_buffer_as_struct -> name2, temp2);*/
-
-	if(send(sockfd, (char *)pointer_to_buffer_as_struct, len, 0) == -1) {
+	strcpy(&pointer_to_buffer_as_struct -> name2, temp2);
+*/
+	if(send(sockfd, (char *)send_data, 20 + strlen(temp1) + 1 + strlen(temp2) + 1, 0) == -1) {
 		perror("send()");
 		exit(1);
 	}
@@ -242,7 +266,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
   	  	  return 0;
 	} */
 
-	free(pointer_to_buffer_as_struct);
+/*	free(pointer_to_buffer_as_struct);*/
 	freeaddrinfo(servinfo);
 	printf("\nClient - Closing sockfd.. \n");
 	close(sockfd); //Close socket when finished

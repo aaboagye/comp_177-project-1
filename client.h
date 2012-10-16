@@ -33,8 +33,6 @@ typedef struct {
 	uint16_t name1_Len;
 	uint16_t name2_Len;
 
-	char name1;
-	char name2;
 }__attribute__ ((packed)) Parlor ;
 
 typedef struct {
