@@ -40,6 +40,7 @@ typedef struct {
 	uint16_t dollar2;
 	uint16_t cent1;
 	uint16_t cent2;
+	uint16_t winner_Len;
 	char winner;
 }__attribute__ ((packed)) Server_rtrn ;
 
