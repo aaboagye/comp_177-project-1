@@ -17,45 +17,37 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include "client.h"
-
-//Aseda's IP Addr v 4: 10.6.146.224
-//#define PORT 4000//The port that the client will be connecting to
 #define MAXDATASIZE 1024 //Max number of bytes we can get at once
 
-/* Sites that might help us:
- * - http://cboard.cprogramming.com/networking-device-communication/98174-c-program-client-server.html
- * - ^^ASEDA!!! This might help you with the server, it has a sample program for client and server
- */
+//Aseda's IP Addr v 4: 10.6.146.224 Port 4000
+//http://cboard.cprogramming.com/networking-device-communication/98174-c-program-client-server.html
 
+	//server <server ip> <server port> //To invoke the server
 int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 port
 	int status;
+	char winner[255];
 	char temp1[255], temp2[255];
 	int sockfd = 0, numbytes;
-	//long addr;
 	char buffer[MAXDATASIZE];
+	Parlor info;
+	Server_rtrn results; //Needed to store results from the server
 
-	//struct hostent *he;
-	//Connector's address information needed
 	//struct sockaddr_in their_addr;
 	struct addrinfo serv_addr;
 	struct addrinfo *servinfo;
-
-	/*Parlor info; //Needed to store input from the user*/
-	Server_rtrn results; //Needed to store results from the server
 
 	if(argc != 3) { //If no command line argument supplied
 		fprintf(stderr, "Client-Usage: %s the_client_hostname\n", argv[0]);
 		exit(1); //Just exit
 	}
 
-	Parlor info;
-
 	memset(&info, 0, sizeof info); //Make sure the structure is empty
-	memset(buffer, '0',sizeof(buffer));
+	memset(buffer, '0', sizeof buffer);
 	memset(&serv_addr, 0, sizeof serv_addr); //Zero the rest of the struct
 
-	printf("\nWelcome to the Pizza program!\n\n"); //Welcome! =)
-	printf("Enter the name of pizza parlor 1: "); //Asks info about first parlor
+	printf("\nWelcome to the Pizza Program!\n\n"); //Welcome! =)
+
+	printf("Enter the name of Pizza Parlor 1: "); //Asks info about first parlor
 	scanf("%255s", temp1);
 	info.name1_Len = strlen(temp1);
 	printf("\nEnter the diameter of pizza 1 in inches: ");
@@ -63,7 +55,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	printf("\nEnter the price of pizza 1: $");
 	scanf("%hu.%02hu", &info.dollar1, &info.cent1);
 
-	printf("\nEnter the name of pizza parlor 2: "); //Asks info about the second parlor
+	printf("\nEnter the name of Pizza Parlor 2: "); //Asks info about the second parlor
 	scanf("%255s", temp2);
 	info.name2_Len = strlen(temp2);
 	printf("\nEnter the diameter of pizza 2 in inches: ");
@@ -73,6 +65,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 
 	Parlor* send_data = ((Parlor *) malloc(sizeof(Parlor) + info.name1_Len + info.name2_Len));
 	memset(send_data, 0, sizeof(send_data));
+
 	send_data -> dollar1 = htons(info.dollar1);
 	send_data -> dollar2 = htons(info.dollar2);
 	send_data -> cent1 = htons(info.cent1);
@@ -84,35 +77,16 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	send_data -> name1_Len = htons(info.name1_Len);
 	send_data -> name2_Len = htons(info.name2_Len);
 
-	printf("DEBUGGING:\n\n");
-	printf("Size of Parlor: %u\nBeginning of structure: 0x%0x\nBeginning of string1: 0x%0x\n", (unsigned int) sizeof(Parlor), (unsigned int) (send_data), (unsigned int)(send_data + sizeof(Parlor)));
-	printf("strlen(temp1): %u", (unsigned int)strlen(temp1));
-	printf("temp2 init: 0x%0x\n", (unsigned int)(send_data + sizeof(Parlor) + info.name1_Len + 1));
 	strncpy((char *)(send_data + 1), temp1, strlen(temp1));
-	strncpy((char*)(send_data + 1 + (info.name1_Len + 1)), temp2, strlen(temp2));
-	memcpy((&send_data + sizeof(Parlor)), temp1, strlen(temp1));
-	memcpy((&send_data + sizeof(Parlor) + strlen(temp1) + 1), temp2, strlen(temp2));
-
-	//Creating a socket
-	//he = gethostbyname(argv[1]); // --> deprecated
-	//he = gethostbyaddr((char *) argv[1], sizeof(argv[1]), AF_INET); //argv[1] = Asedas IP
-
-	//Get the Host Information
-	/*if(he == NULL) {
-		perror("gethostbyaddr()");
-		exit(1);
-	}
-
-	else {
-		printf("Client - The remote host is: %s \n", argv[1]);
-	}*/
+	strncpy(((char *)(send_data + 1) + (info.name1_Len + 1)), temp2, strlen(temp2));
 
 	serv_addr.ai_family = AF_UNSPEC;
-	serv_addr.ai_socktype = SOCK_STREAM; // TCP stream sockets
-	serv_addr.ai_flags = AI_CANONNAME;     // fill in my IP for me
+	serv_addr.ai_socktype = SOCK_STREAM; //TCP stream sockets
+	serv_addr.ai_flags = AI_CANONNAME;     //Fill in my IP for me
 
+	// Get info
 	if ((status = getaddrinfo(argv[1], argv[2], &serv_addr, &servinfo)) != 0) {
-	    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+	    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status)); //GAI
 	    exit(1);
 	}
 
@@ -120,7 +94,8 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 		printf("\nClient - The getaddrinfo() is OK.. \n");
 	}
 
-	if((sockfd = socket(servinfo -> ai_family, servinfo -> ai_socktype, servinfo -> ai_protocol)) < 0) { //Print out failed if socket cannot be created
+	//Create socket. Print out failed if socket cannot be created
+	if((sockfd = socket(servinfo -> ai_family, servinfo -> ai_socktype, servinfo -> ai_protocol)) < 0) {
 		printf("ERROR: Could not create socket!\n");
 		exit(1);
 	}
@@ -130,15 +105,10 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	}
 
 	bind(sockfd, servinfo -> ai_addr, servinfo -> ai_addrlen);
-
-	//their_addr.sin_family = AF_INET; //Host byte order
-
-	//Short, network byte order
-
 	printf("Server - Using %s and port %s...\n", argv[1], argv[2]);
 
 	//Connecting the server...
-	if(connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen)) {//connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) == -1) {
+	if(connect(sockfd, servinfo -> ai_addr, servinfo -> ai_addrlen)) { //connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) == -1) {
 		perror("Connect()");
 		exit(1);
 	}
@@ -147,59 +117,8 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 		printf("Client - The connect is OK.. \n");
 	}
 
-	//printf(”An error has occurred: %s\n", strerror(errno));
-
-	//sockfd = socket(AF_INET, SOCK_STREAM, 0);		//Create socket for client.
-	//fcntl(sockfd, F_SETFL, O_NONBLOCK);
-
-	//server <server port> //To invoke the server
-	//answer = connect(sockfd, (struct sockaddr *)&address, len);
-
-	//send(); Send data to the server
-	//recv(); Receive data from the server
-
-	/*
-	if(result == -1) {
-        perror("Error has occurred");
-        exit(-1);
-    }
-	*/
-
-	//Sending information...
-	//STILL NEED TO CODE THIS PART!
-	//		sendto() == -1 then fail
-	//		else printf("Client - The sendto() is OK.. \n");
-
-	int len = strlen(buffer);
-
-	/*int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1 +info.name2_Len + 1;*/
-	/*int total_data = sizeof(Parlor) - 1 - 1 + info.name1_Len + 1;
-	int total_data = sizeof(Parlor) + info.name1_Len + 1 + info.name2_Len + 1;  +1 for \0
-
-	char* pointer_to_buffer = malloc(total_data);
-
-	Parlor* pointer_to_buffer_as_struct;  // No structure here - just an empty pointer!
-
-	pointer_to_buffer_as_struct = (Parlor *) pointer_to_buffer; // Casting
-
-	pointer_to_buffer_as_struct -> dollar1 = htons(info.dollar1);
-	pointer_to_buffer_as_struct -> dollar2 = htons(info.dollar2);
-	pointer_to_buffer_as_struct -> cent1 = htons(info.cent1);
-	pointer_to_buffer_as_struct -> cent2 = htons(info.cent2);
-	pointer_to_buffer_as_struct -> inches1 = htons(info.inches1);
-	pointer_to_buffer_as_struct -> inches2 = htons(info.inches2);
-	pointer_to_buffer_as_struct -> fracInches1 = htons(info.fracInches1);
-	pointer_to_buffer_as_struct -> fracInches2 = htons(info.fracInches2);
-	pointer_to_buffer_as_struct -> name1_Len = htons(info.name1_Len);
-	pointer_to_buffer_as_struct -> name2_Len = htons(info.name2_Len);
-	
-	strcpy(&
-
-	strcpy(&pointer_to_buffer_as_struct -> name1, temp1);
-	strcpy((char *)&pointer_to_buffer_as_struct[total_data-1], temp2);
-	strcpy(&pointer_to_buffer_as_struct -> name2, temp2);
-*/
-	if(send(sockfd, (char *)send_data, 20 + strlen(temp1) + 1 + strlen(temp2) + 1, 0) == -1) {
+	//Send the Parlor struct and two parlor names over
+	if(send(sockfd, (char *)send_data, sizeof buffer/*sizeof(Parlor) + strlen(temp1) + 1 + strlen(temp2) + 1*/, 0) == -1) {
 		perror("send()");
 		exit(1);
 	}
@@ -208,13 +127,8 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 		printf("Client - The send() is OK.. \n");
 	}
 
-	//Read and Write via socket???
-	//rc = write(sockfd, &ch, 1);
-	//read(sockfd, &ch, 1);
-	//recv() difference with recvfrom()???
-
 	//Receiving reply... Read back from server
-	if((numbytes = recv(sockfd, buffer, MAXDATASIZE - 1, 0)) == -1) {
+	if((numbytes = recv(sockfd, buffer, sizeof(buffer), 0)) == -1) {
 		perror("recv()");
 		exit(1);
 	}
@@ -223,38 +137,29 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 		printf("Client - The recv() is OK.. \n");
 	}
 
+	//After receiving from buffer
+	Server_rtrn* recv_data = ((Server_rtrn *) malloc(sizeof(Server_rtrn) + results.winner_Len));
+	memset(recv_data, 0, sizeof(recv_data));
+	recv_data -> dollar1 = ntohs(results.dollar1); //Store data
+	recv_data -> dollar2 = ntohs(results.dollar2);
+	recv_data -> cent1 = ntohs(results.cent1);
+	recv_data -> cent2 = ntohs(results.cent2);
+
+	strcpy(winner, (char *)(recv_data + sizeof(Server_rtrn)));
+
 	//Get results and store into Server_rtrn structure
-	buffer[numbytes] = '\0';
 	printf("Client - Received: %s ...\n", buffer);
-	//results.cost1 = ;
-	//results.cost2 = ;
-	//results.winner = ;
 
-	printf("\n\nThe cost per square inch of pizza 1 is: $%hu.%hu", results.dollar1, results.cent1);
-	printf("\nThe cost per square inch of pizza 2 is: $%hu.%hu", results.dollar2, results.cent2);
+	printf("\n\nThe cost per square inch of pizza 1 is: $%hu.%02hu", results.dollar1, results.cent1);
+	printf("\nThe cost per square inch of pizza 2 is: $%hu.%02hu", results.dollar2, results.cent2);
 
-	printf("\n%s offers the most economical choice. \n\nEnjoy!", results.winner);
-	/*
-	if(results.dollar1 < results.cost2) { //If parlor 1 cost is less than parlor 2 cost
-		printf("%s offers the most economical choice. \n\nEnjoy!", &info.name1);
-	}
+	printf("\n%s offers the most economical choice. \n\nEnjoy!", winner);
 
-	if(results.cost1 > results.cost2) { //If parlor 2 cost is less than parlor 1 cost
-		printf("%s offers the most economical choice. \n\nEnjoy!", &info.name2);
-	}
-
-	if(results.cost1 == results.cost2) { //If both cost are equal
-		printf("Both parlor offers the most economical choice. \n\nEnjoy!");
-	}*/
-
-	//Research SIGINT!!!!
-	//Your server should "capture" the user's keystroke (technically, the SIGINT interrupt triggered by CTRL-C),
 	//Call a function that properly shuts down and cleans up the server by closing the sockets, & then exit gracefully
-	//Ask Aseda if this should be implemented here or in the server part of the project
 	//The prototype of the signal function ----> void (*signal(int signo, void (*func )(int)))(int);
-	//This site was useful for SIGINT:    http://www.thegeekstuff.com/2012/03/catch-signals-sample-c-code/
-	/*
-	void sig_handler(int signo) {
+	//http://www.thegeekstuff.com/2012/03/catch-signals-sample-c-code/
+
+	/*void sig_handler(int signo) {
 		if (signo == SIGINT)	printf("received SIGINT\n");
 	}
 
@@ -266,10 +171,10 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
   	  	  return 0;
 	} */
 
-/*	free(pointer_to_buffer_as_struct);*/
+	free(recv_data); //Free everything
+	free(send_data);
 	freeaddrinfo(servinfo);
 	printf("\nClient - Closing sockfd.. \n");
 	close(sockfd); //Close socket when finished
 	return 0;
 }
-
