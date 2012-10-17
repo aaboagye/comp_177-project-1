@@ -67,6 +67,7 @@ int main(int argc, char **argv){
 	char* buffer_ptr1 = malloc(total_size1);
 	struct parlor* ptr_bytes1;
 	ptr_bytes1 = (struct parlor*) buffer_ptr1;
+	
 	/* here there needs to be something along the lines of: */
 	recv(sockfd_client, buffer, 160, 0); /* have received the whole buffer */
 	ptr_bytes1 = (struct parlor*) buffer;
@@ -80,16 +81,88 @@ int main(int argc, char **argv){
 	ptr_bytes1->pizza2_fractional_inches = ntohs(ptr_bytes1->pizza2_fractional_inches);
 	ptr_bytes1->vendor1_name_ln = ntohs(ptr_bytes1->vendor1_name_ln);
 	ptr_bytes1->vendor2_name_ln = ntohs(ptr_bytes1->vendor2_name_ln);
-	strcpy(vendor1, (char*) (ptr_bytes1 + sizeof(struct parlor)));
-	strcpy(vendor2, (char*) (ptr_bytes1 + (int)ptr_bytes1->vendor1_name_ln));
-	printf("$%i.%i\n",ptr_bytes1->pizza1_dollars, ptr_bytes1->pizza1_cents);
-	printf("Diameter of pizza 1: %u.%u\n", ptr_bytes1->pizza1_inches, ptr_bytes1->pizza1_fractional_inches);
-	printf("Cost of pizza2: $%u.%u\n",ptr_bytes1->pizza2_dollars, ptr_bytes1->pizza2_cents);
-	printf("Diameter of pizza 2: %u.%u\n", ptr_bytes1->pizza2_inches, ptr_bytes1->pizza2_fractional_inches);
-	printf("Pizza 1 vendor: \"%s\"\n", vendor1);
-	printf("Pizza 2 vendor: \"%s\"\n", vendor2);
+	strncpy(vendor1, (char*) (ptr_bytes1 + 1), ptr_bytes1->vendor1_name_ln);
+	strcpy(vendor2, (char*) (ptr_bytes1 + 1) +(ptr_bytes1->vendor1_name_ln + 1));
 	
+	printf("TEST: received. Parsing...\n");
+	struct calc winner;
+	double cpsi1, cpsi2;
+	double p1area = (double)ptr_bytes1->pizza1_inches;
+	double frac = (double)ptr_bytes1->pizza1_fractional_inches;
+	frac = frac / 100;
+	p1area += frac; p1area /= 2; p1area *= p1area; p1area *= 3.14159;
+
+	cpsi1 = (double)ptr_bytes1->pizza1_dollars;
+	double cents = (double)ptr_bytes1->pizza1_cents;
+	winner.p1dol = ptr_bytes1->pizza1_dollars;
+	cents /= 100;
+	double temp1 = (double)winner.p1dol;
+	temp1 += cents;									/* Adding decimal cents*/
+	cpsi1 += cents; cpsi1 /= p1area;
+	winner.p1cen = (uint16_t)(100 * modf(cpsi1, &temp1));  /* Splitting double value into 2 doubles */
+	winner.p1dol = (uint16_t) temp1;				/* Storing back into the struct. */
+	printf("Pizza 1 area: %f sq in.\n", p1area);
+	printf("Cost per sq inch: $%f\n", cpsi1);
+
+
+	double p2area = (double)ptr_bytes1->pizza2_inches;
+	frac = (double)ptr_bytes1->pizza2_fractional_inches;
+	frac = frac / 100;								/* convert to decimal inches */
+	p2area += frac; p2area /= 2; p2area *= p2area; p2area *= 3.14159;
+
+	cpsi2 = (double)ptr_bytes1->pizza2_dollars;
+	cents = (double)ptr_bytes1->pizza2_cents;
+	cents /= 100;
+	winner.p2dol = ptr_bytes1->pizza2_dollars;
+	winner.p2cen = ptr_bytes1->pizza2_cents;
+	cpsi2 += cents; cpsi2 /= p2area;
+	double temp2 = (double)winner.p2dol;
+	temp2 += cents;
+	winner.p2cen = (uint16_t)(100 * modf(cpsi2, &temp2));
+	winner.p2dol = (uint16_t) temp2;
+	
+	printf("Pizza 2 area: %f sq in.\n", p2area);
+	printf("Cost per sq inch: $%f\n", cpsi2);
+
+	printf("####################################################\n# DEBUG\n\##########################################################\nPizza 1:\n$%hu.%hu\nPizza 2:\n$%hu.%hu\n",winner.p1dol, winner.p1cen, winner.p2dol, winner.p2cen);
+	char *buffer_ptr2 = malloc(sizeof(struct calc));
+	struct calc *send_ptr = (struct calc*)buffer_ptr2;
+	send_ptr->p1dol = htons(winner.p1dol);
+	send_ptr->p1cen = htons(winner.p1cen);
+	send_ptr->p2dol = htons(winner.p2dol);
+	send_ptr->p2cen = htons(winner.p2cen);
+
+
+	int bytes_sent;
+
+	printf("TEST: calculations done. Comparing...\n");
+	if(cpsi1 > cpsi2){
+		printf("2 < 1: $%hu.%hu\n", winner.p2dol, winner.p2cen);
+		memset(send_ptr, '0', sizeof(struct calc) + strlen(vendor2));
+		winner.win_len = (uint16_t)strlen(vendor2);
+		send_ptr->win_len = htons(winner.win_len);
+		strncpy((char*)(send_ptr + 1), vendor2, strlen(vendor2));
+		printf("Copied string...\n");
+		if(bytes_sent = send(sockfd, (char*)send_ptr, sizeof(struct calc) + strlen(vendor2), 0) == -1){
+			perror("server: send");
+			return 1;
+		}
+		printf("SENT: %d B\n", bytes_sent);
+	}else{
+		printf("1 < 2: $%hu.%hu\n", winner.p1dol, winner.p1cen);
+		memset(send_ptr, '0', sizeof(struct calc) + strlen(vendor1));
+		winner.win_len = (uint16_t)strlen(vendor1);
+		send_ptr->win_len = htons(winner.win_len);
+		strncpy((char*)(send_ptr + 1), vendor1, strlen(vendor1));
+		if(bytes_sent = send(sockfd, (char*)send_ptr, sizeof(struct calc) + strlen(vendor1), 0) == -1){
+			perror("server: send");
+			return 1;
+		}
+		printf("SENT: %d B\n", bytes_sent);
+	}
+	printf("TEST: buffer has been sent. Closing...\n");
 	close(sockfd);
+	free(buffer_ptr1);
 	freeaddrinfo(res);
 	return 0;
 }
