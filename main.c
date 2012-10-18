@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	}
 
 	//Send the Parlor struct and two parlor names over
-	if(send(sockfd, (char *)send_data, sizeof buffer/*sizeof(Parlor) + strlen(temp1) + 1 + strlen(temp2) + 1*/, 0) == -1) {
+	if(send(sockfd, (char *)send_data, sizeof(Parlor) + strlen(temp1) + 1 + strlen(temp2) + 1, 0) == -1) {
 		perror("send()");
 		exit(1);
 	}
@@ -138,40 +138,22 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	}
 
 	//After receiving from buffer
-	Server_rtrn* recv_data = ((Server_rtrn *) malloc(sizeof(Server_rtrn) + results.winner_Len));
-	memset(recv_data, 0, sizeof(recv_data));
-	recv_data -> dollar1 = ntohs(results.dollar1); //Store data
-	recv_data -> dollar2 = ntohs(results.dollar2);
-	recv_data -> cent1 = ntohs(results.cent1);
-	recv_data -> cent2 = ntohs(results.cent2);
+	/*Server_rtrn* recv_data = ((Server_rtrn *) malloc(sizeof(Server_rtrn) + results.winner_Len));
+	memset(recv_data, 0, sizeof(recv_data));*/
 
-	strcpy(winner, (char *)(recv_data + sizeof(Server_rtrn)));
+	Server_rtrn *recv_data = (Server_rtrn *)buffer;
+	results.dollar1 = ntohs(recv_data->dollar1); //Store data
+	results.dollar2 = ntohs(recv_data->dollar2);
+	results.cent1 = ntohs(recv_data->cent1);
+	results.cent2 = ntohs(recv_data->cent2);
+	results.winner_Len = ntohs(recv_data->winner_Len);
+	strncpy(winner, (char *)(recv_data + sizeof(Server_rtrn)), results.winner_Len);
 
 	//Get results and store into Server_rtrn structure
 	printf("Client - Received: %s ...\n", buffer);
-
 	printf("\n\nThe cost per square inch of pizza 1 is: $%hu.%02hu", results.dollar1, results.cent1);
 	printf("\nThe cost per square inch of pizza 2 is: $%hu.%02hu", results.dollar2, results.cent2);
-
 	printf("\n%s offers the most economical choice. \n\nEnjoy!", winner);
-
-	//Call a function that properly shuts down and cleans up the server by closing the sockets, & then exit gracefully
-	//The prototype of the signal function ----> void (*signal(int signo, void (*func )(int)))(int);
-	//http://www.thegeekstuff.com/2012/03/catch-signals-sample-c-code/
-
-	/*void sig_handler(int signo) {
-		if (signo == SIGINT)	printf("received SIGINT\n");
-	}
-
-	int main(void) {
-  	  	  if (signal(SIGINT, sig_handler) == SIG_ERR)
-  	  	  	  printf("\ncan't catch SIGINT\n"); //A long long wait so that we can easily issue a signal to this process
-  	  	  while(1)
-    		sleep(1);
-  	  	  return 0;
-	} */
-
-	free(recv_data); //Free everything
 	free(send_data);
 	freeaddrinfo(servinfo);
 	printf("\nClient - Closing sockfd.. \n");
