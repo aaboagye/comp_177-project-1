@@ -1,17 +1,19 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall -Wextra -D_POSIX_SOURCE
 
+all:		client server
+
 client.o:	main.c
 	$(CC) $(CFLAGS) -c main.c -o client.o
 
-client:	client.o
+client:		client.o
 	$(CC) $(CFLAGS) -o client client.o
 
 server.o:	server.c
 	$(CC) $(CFLAGS) -c server.c
 
-server:	server.o
+server:		server.o
 	$(CC) $(CFLAGS) -o server server.o
 
 clean:	server
-	rm server server.o
+	rm server server.o client client.o

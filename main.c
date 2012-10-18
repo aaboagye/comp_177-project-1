@@ -4,7 +4,7 @@
 // Course: COMP 177 Computer Networking
 // Project: Pizza Consumers Union
 // Created on: October 4, 2012
-// Last Edited: October 4, 2012
+// Last Edited: October 17, 2012
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,9 +18,6 @@
 #include <netdb.h>
 #include "client.h"
 #define MAXDATASIZE 1024 //Max number of bytes we can get at once
-
-//Aseda's IP Addr v 4: 10.6.146.224 Port 4000
-//http://cboard.cprogramming.com/networking-device-communication/98174-c-program-client-server.html
 
 	//server <server ip> <server port> //To invoke the server
 int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 port
@@ -37,7 +34,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	struct addrinfo *servinfo;
 
 	if(argc != 3) { //If no command line argument supplied
-		fprintf(stderr, "Client-Usage: %s the_client_hostname\n", argv[0]);
+		fprintf(stderr, "Client-Usage: %s <server ip> <server port>\n", argv[0]);
 		exit(1); //Just exit
 	}
 
@@ -138,8 +135,6 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	}
 
 	//After receiving from buffer
-	/*Server_rtrn* recv_data = ((Server_rtrn *) malloc(sizeof(Server_rtrn) + results.winner_Len));
-	memset(recv_data, 0, sizeof(recv_data));*/
 
 	Server_rtrn *recv_data = (Server_rtrn *)buffer;
 	results.dollar1 = ntohs(recv_data->dollar1); //Store data
@@ -147,7 +142,7 @@ int main(int argc, char *argv[]) { //0 is name of program, 1 is the IP and, 2 po
 	results.cent1 = ntohs(recv_data->cent1);
 	results.cent2 = ntohs(recv_data->cent2);
 	results.winner_Len = ntohs(recv_data->winner_Len);
-	strncpy(winner, (char *)(recv_data + sizeof(Server_rtrn)), results.winner_Len);
+	strncpy(winner, ((char *)(recv_data) + sizeof(Server_rtrn)), results.winner_Len + 1);
 
 	//Get results and store into Server_rtrn structure
 	printf("Client - Received: %s ...\n", buffer);

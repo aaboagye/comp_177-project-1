@@ -1,3 +1,9 @@
+// Name & E-mail: Celena Tan 			tan.celena@gmail.com
+// Name & E-mail: Aseda Aboagye			aseda.aboagye@gmail.com
+// File Name: server.c
+// Course: COMP 177 Computer Networking
+// Project: Pizza Consumers Union
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -48,7 +54,10 @@ int main(int argc, char **argv){
 		if(sockfd<0){
 			perror("server: socket");
 			return 1;
-		}
+		}/* rerun the server immediately after we kill it otherwise we have to wait about 20 secs.
+		 * Eliminates "ERROR on binding: Address already in use" error. */
+	    int optval = 1;
+		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
 		status = bind(sockfd, res->ai_addr, res->ai_addrlen);
 		if(status == -1){
 			perror("server: bind");
@@ -78,7 +87,6 @@ int main(int argc, char **argv){
 		char* buffer_ptr1 = malloc(total_size1);
 		struct parlor* ptr_bytes1;
 		ptr_bytes1 = (struct parlor*) buffer_ptr1;
-		
 		recv(sockfd_client, buffer, 160, 0); /* have received the whole buffer */
 		ptr_bytes1 = (struct parlor*) buffer;
 		ptr_bytes1->pizza1_dollars = ntohs(ptr_bytes1->pizza1_dollars);
@@ -128,6 +136,7 @@ int main(int argc, char **argv){
 		winner.p2dol = (uint16_t) temp2;
 
 		char *buffer_ptr2 = malloc(sizeof(struct calc) + MAX_NAME_SIZE);
+		memset(buffer_ptr2, 0, (sizeof(struct calc) + MAX_NAME_SIZE));
 		struct calc *send_ptr = (struct calc*)buffer_ptr2;
 		send_ptr->p1dol = htons(winner.p1dol);
 		send_ptr->p1cen = htons(winner.p1cen);
